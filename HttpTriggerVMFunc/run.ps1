@@ -15,9 +15,9 @@ Try{
     # Interact with query parameters or the body of the request.
     Write-Output ($request | ConvertTo-Json -depth 99)
 
-    $ResourceGroupName = "rg-eus2-vm-exec" # $request.query.ResourceGroupName
-    $VMName = "vm-eus2-win11-dev" # $request.query.VMName
-    $Context =  "your subscription-id" # $request.query.Context
+    $ResourceGroupName = $request.query.ResourceGroupName # "rg-eus2-vm-exec" #
+    $VMName = $request.query.VMName # "vm-eus2-win11-dev"
+    $Context = $request.query.Context # "Subscription Id"
     $Action = $request.query.Action
 
     $null = Connect-AzAccount -Identity
@@ -31,38 +31,23 @@ Try{
     }
     [string]$Message = "Virtual machine [$VMName] status: " + $vmStatus.statuses[-1].displayStatus
     Switch($Action){
-        'start'{
-            If($vmStatus.statuses[-1].displayStatus -ne 'VM running'){
-                Start-AzVM -ResourceGroupName $ResourceGroupName -Name $VMName -Verbose
-                [string]$message += '... Virtual machine is now starting'
-            }
-            Else{
-                [string]$message += '... Virtual machine is already running'
-            }
-        }
-        'stop'{
-            If($vmStatus.statuses[-1].displayStatus -ne 'VM deallocated'){
-                Stop-AzVM -ResourceGroupName $ResourceGroupName -Name $VMName -Force -Verbose
-                [string]$message += '... Virtual machine is stopping'
-            }
-            Else{
-                [string]$message += '... Virtual machine is already deallocated'
-            }
-        }
-        'status'{
-            [string]$message
-        }
-        'execute' {
+        'script' {
             Invoke-AzVMRunCommand -ResourceGroupName $ResourceGroupName -VMName $VMName -CommandId 'RunPowerShellScript' -ScriptPath 'simple.ps1'
+            [string]$message += '... Executing SCRIPT in remote VM.'
+        }
+        'command' {
+            Invoke-AzVMRunCommand -ResourceGroupName $ResourceGroupName -VMName $VMName -CommandId 'RunPowerShellScript' -ScriptString 'Get-ComputerInfo > c:\output.txt'
+            [string]$message += '... Executing COMMAND in remote VM.'
         }
         default{
-            [string]$message += ". $($request.query.action) is outside of the allowed actions. Only allowed actions are: 'start', 'stop', 'status'"
+            [string]$message += ". $($request.query.action) is outside of the allowed actions. Only allowed actions are: 'script', 'command'"
             $status = 400
         }
     }
 }
 Catch{
     [string]$message += $_
+    $status = 500
 }
 
 Write-output $message
