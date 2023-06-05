@@ -30,13 +30,15 @@ There are multiple sections to this setup process.
 - Scope: Resource Group
 - Subscription: Your subscription
 - Resource Group: RG that holds your VM
-- Role: "Virtual MAchine Contributor"
+- Role: "Virtual Machine Contributor"
 - Tap on Save
 - Your Azure function has been setup to access VM. Next step is to code.
 - Create a HTTP trigger function, either on the portal or from VSCode in your local machine
 - Remember to add .psd1 and .ps1 file in the root directory, level above where your run.ps1 is
 
 ## Script and parameters
+
+simple.ps1 is the script executed in Azure VM. Before you try this code, please make sure to move this script into VM
 
 ## Next steps
 
