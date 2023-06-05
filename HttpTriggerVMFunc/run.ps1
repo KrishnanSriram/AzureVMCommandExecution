@@ -14,11 +14,18 @@ Try{
 
     # Interact with query parameters or the body of the request.
     Write-Output ($request | ConvertTo-Json -depth 99)
+    $ResourceGroupName = $request.Body.ResourceGroupName
+    $VMName = $request.Body.VMName
+    $Context = $request.Body.Context
+    $Action = $request.Body.Action
+    $Command = $request.Body.Command
 
-    $ResourceGroupName = $request.query.ResourceGroupName # "rg-eus2-vm-exec" #
-    $VMName = $request.query.VMName # "vm-eus2-win11-dev"
-    $Context = $request.query.Context # "Subscription Id"
-    $Action = $request.query.Action
+
+    Write-Output("Resource Group - " + $ResourceGroupName)
+    Write-Output("VM Name - " + $VMName)
+    Write-Output("Context - " + $Context)
+    Write-Output("Action - " + $Action)
+    Write-Output("Command - " + $Command)
 
     $null = Connect-AzAccount -Identity
     $null = Set-AzContext $Context
@@ -32,12 +39,14 @@ Try{
     [string]$Message = "Virtual machine [$VMName] status: " + $vmStatus.statuses[-1].displayStatus
     Switch($Action){
         'script' {
-            Invoke-AzVMRunCommand -ResourceGroupName $ResourceGroupName -VMName $VMName -CommandId 'RunPowerShellScript' -ScriptPath 'simple.ps1'
-            [string]$message += '... Executing SCRIPT in remote VM.'
+            $ret_value = Invoke-AzVMRunCommand -ResourceGroupName $ResourceGroupName -VMName $VMName -CommandId 'RunPowerShellScript' -ScriptPath 'simple.ps1'
+            [string]$message += $ret_value
         }
         'command' {
-            Invoke-AzVMRunCommand -ResourceGroupName $ResourceGroupName -VMName $VMName -CommandId 'RunPowerShellScript' -ScriptString 'Get-ComputerInfo > c:\output.txt'
-            [string]$message += '... Executing COMMAND in remote VM.'
+            $ret_value = Invoke-AzVMRunCommand -ResourceGroupName $ResourceGroupName -VMName $VMName -CommandId 'RunPowerShellScript' -ScriptString $Command
+            Write-Output "Completed execution of command with return value"
+            Write-Output $ret_value.Value.Message
+            [string]$message = $ret_value.Value.Message
         }
         default{
             [string]$message += ". $($request.query.action) is outside of the allowed actions. Only allowed actions are: 'script', 'command'"
@@ -60,3 +69,4 @@ Push-OutputBinding -Name Response -Value (
         headers = @{ "content-type" = "text/plain" }
     }
 )
+return $message
