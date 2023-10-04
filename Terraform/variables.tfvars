@@ -1,0 +1,8 @@
+rg_name = "rg-remotevmexec"
+rg_location = "eastus2"
+vm_name = "win10042023"
+sa_name = "safnapps"
+function_app_name = "remotevmexecfn"
+http_trigger_fn_name = "httptrigger-vmexec-function"
+app_service_name = "rvmappservice"
+app_service_plan_name = "rvmappserviceplan"
